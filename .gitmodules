@@ -1,0 +1,6 @@
+[submodule "cv2_interface"]
+	path = cv2_interface
+	url = https://github.com/kevin-tofu/cv2_interface.git
+[submodule "mediaBase"]
+	path = mediaBase
+	url = https://github.com/kevin-tofu/mediaBase.git
