@@ -1,0 +1,76 @@
+stages:
+  - build
+  - test
+  - deployment
+
+variables:
+  APPLICATION_NAME: opencv-server
+  VERSION: v0
+  # VERSION: ${CI_COMMIT_SHORT_SHA}
+  IMAGE_NAME: ${CONTAINER_STORE}/${APPLICATION_NAME}:${VERSION}
+  GIT_SUBMODULE_STRATEGY: recursive # it needs for importing submodules
+
+image: docker:19.03.12-dind
+
+build-job:
+  stage: build
+  rules:
+    # - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH == "master"
+    # - if: $CI_COMMIT_BRANCH == "build"
+  
+  tags:
+    - myshell
+  
+  before_script:
+    - mkdir temp
+    - cp -r /home/gitlab-runner/data/temp ./
+    - docker ps
+    - echo ${STORE_PASSWORD} | docker login --username ${STORE_USERNAME} --password-stdin
+
+  script:
+    - docker build --no-cache -t ${IMAGE_NAME} .
+    - docker push ${IMAGE_NAME}
+    - docker rmi ${IMAGE_NAME}
+
+  # artifacts:
+  #   paths:
+  #       - build/
+
+test:
+  stage: test
+  rules:
+    # - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH == "master"
+  tags:
+    - myshell
+  before_script:
+    - echo ${STORE_PASSWORD} | docker login --username ${STORE_USERNAME} --password-stdin
+    
+  script:
+    - > 
+      docker run -t --rm 
+      --name opencvserver 
+      --env APP_PORT=3333
+      -p 3333:80 ${IMAGE_NAME} python test_main.py
+
+
+deployment-job:
+  stage: deployment
+  rules:
+  # - if: '$CI_COMMIT_BRANCH == "master"'
+  - if: '$CI_COMMIT_BRANCH == "deployment"'
+  tags:
+    - myshell
+  before_script:
+    - echo ${STORE_PASSWORD} | docker login --username ${STORE_USERNAME} --password-stdin
+  script:
+    # create/update the deployment
+    - envsubst < kubernetes_manifest.yml | kubectl apply -f -
+    # Pull latest image of deployment
+    # - kubectl rollout restart deployment/${APPLICATION_NAME}
+    - kubectl rollout restart deployment/${APPLICATION_NAME}
+  environment:
+    name: production
+    kubernetes:
+      namespace: ${KUBERNETES_NAMESPACE}
