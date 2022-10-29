@@ -4,7 +4,7 @@ from fastapi import APIRouter, File, UploadFile, Header, Depends
 from fastapi import BackgroundTasks
 from typing import List, Optional
 
-from routes.opencv_depends import params_fourpoint_algorithm
+from routes.fourpoints_depends import params_fourpoint_algorithm
 from controllers.opencv import opencv_controller
 import config
 opencv_ctr = opencv_controller(config)
