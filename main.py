@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 # from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.cors import CORSMiddleware
-from routes import opencv
+from routes import fourpoints
 import config
 from logconf import mylogger
 logger = mylogger(__name__)
@@ -33,7 +33,7 @@ serverinfo = {
 def root():
     return serverinfo
 
-app.include_router(opencv.router)
+app.include_router(fourpoints.router)
 
 if __name__ == "__main__":
 
